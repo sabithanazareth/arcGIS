@@ -12,16 +12,28 @@ import axios from "axios";
 import "./App.css";
 
 const App = () => {
-  const [weatherData, setWeatherData] = useState(null);
+  const [weatherData, setWeatherData] = useState({
+    main: "",
+    temperature: 0,
+    humidity: 0,
+    windSpeed: 0,
+    precipitation: 0,
+  });
   const [view, setView] = useState(null);
 
   const fetchWeather = async (latitude, longitude) => {
     try {
       const apiKey = import.meta.env.VITE_APP_API_KEY;
       const { data } = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`
       );
-      setWeatherData(data.weather[0].main);
+      setWeatherData({
+        main: data.weather[0].main,
+        temperature: data.main.temp,
+        humidity: data.main.humidity,
+        windSpeed: data.wind.speed,
+        precipitation: data.rain ? data.rain["1h"] : 0, // Assuming rain in the last hour
+      });
     } catch (error) {
       console.error("Error fetching weather data:", error);
     }
@@ -105,11 +117,11 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (view && weatherData) {
+    if (view && weatherData.main) {
       let weatherType;
       let cloudCover = 0.3; // Default cloud cover
 
-      switch (weatherData.toLowerCase()) {
+      switch (weatherData.main.toLowerCase()) {
         case "clouds":
           weatherType = "cloudy";
           break;
@@ -133,9 +145,20 @@ const App = () => {
 
   return (
     <>
-      {weatherData && (
+      {weatherData.main && (
         <div className="weather-container">
-          <p className="weather-text">{weatherData} at this location</p>
+          <h2>{weatherData.main} at this location</h2>
+          <div className="weather-details">
+            <div className="weather-item">
+              <strong>Temperature:</strong> {weatherData.temperature} °C
+            </div>
+            <div className="weather-item">
+              <strong>Humidity:</strong> {weatherData.humidity}%
+            </div>
+            <div className="weather-item">
+              <strong>Wind Speed:</strong> {weatherData.windSpeed} m/s
+            </div>
+          </div>
         </div>
       )}
       <div id="MapApp" style={{ height: "80vh" }} />
